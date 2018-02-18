@@ -2,14 +2,29 @@
 #include <cstring>
 #include <string>
 #include <algorithm>
+#include <random>
+#include <chrono>
 
 using namespace std;
 
 #define LOOP 10
 
-#define TO_GUESS "RYBOP"
+string AUTHORIZED_CHAR = "RYBOP";
 
-const char AUTHORIZED_CHAR[] = "RYBOP";
+/**
+ * Get a randomized string to play with
+ *
+ * @param string authorizedChar String of letters possibilities
+ *
+ * @return string
+ */
+string stringToGuess(string authorizedChar) {
+    string toGuess = authorizedChar;
+    unsigned seed = chrono::system_clock::now().time_since_epoch().count();
+    shuffle(toGuess.begin(), toGuess.end(), default_random_engine(seed));
+
+    return toGuess;
+}
 
 /**
  * in_array in c
@@ -29,9 +44,7 @@ bool isCharInString(char needle, string haystack) {
  */
 bool hasError(string patternMatching) {
     for (size_t i = 0; i < patternMatching.length(); ++i) {
-        char minus = '-';
-        char x = 'X';
-        if (isCharInString(minus, patternMatching) || isCharInString(x, patternMatching)) {
+        if (isCharInString('-', patternMatching) || isCharInString('x', patternMatching)) {
             return true;
         }
     }
@@ -43,12 +56,12 @@ bool hasError(string patternMatching) {
  *
  * @var string guessing
  */
-string getPatternMatching(string guessing) {
+string getPatternMatching(string guessing, string toGuess) {
     string patternMatching = "";
     for (size_t i = 0; i < guessing.length(); ++i) {
-        if (!isCharInString(guessing[i], TO_GUESS)) {
-            patternMatching += "X";
-        } else if (guessing[i] == TO_GUESS[i]) {
+        if (!isCharInString(guessing[i], toGuess)) {
+            patternMatching += "x";
+        } else if (guessing[i] == toGuess[i]) {
             patternMatching += "+";
         } else {
             patternMatching += "-";
@@ -66,18 +79,18 @@ int main(int const argc, char const *argv[]) {
 
     int attempt = 0;
     string guessing;
+    string toGuess = stringToGuess(AUTHORIZED_CHAR);
     bool found = false;
     do {
         ++attempt;
-        cout << "Try to guess sequence : " << endl;
+        cout << "Try to guess sequence (" << attempt << "/" << LOOP << ") : " << endl;
         cin >> guessing;
-        if (guessing.length() != strlen(TO_GUESS)) {
+        if (guessing.length() != toGuess.length()) {
             cout << "Guessing is too short or too long" << endl;
             continue;
         }
-        string patternMatching = getPatternMatching(guessing);
+        string patternMatching = getPatternMatching(guessing, toGuess);
         if (!hasError(patternMatching)) {
-
             found = true;
             break;
         }
@@ -86,9 +99,9 @@ int main(int const argc, char const *argv[]) {
     } while(attempt < LOOP);
 
     if (found) {
-        cout << "Congrats ! Solution " << TO_GUESS << " was found in " << attempt++ << " try." << endl;
+        cout << "Congrats ! Solution " << toGuess << " was found in " << attempt << " try." << endl;
     } else {
-        cout << "Sorry, solution " << TO_GUESS << " wasn't found." << endl;
+        cout << "Sorry, solution " << toGuess << " wasn't found." << endl;
     }
 
     return 0;
