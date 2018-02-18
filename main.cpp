@@ -7,9 +7,17 @@
 
 using namespace std;
 
-#define LOOP 10
+const unsigned int LOOP = 10;
 
-string AUTHORIZED_CHAR = "RYBOP";
+const string AUTHORIZED_CHAR = "RYBOP";
+
+/*
+ * TODO :
+ * - improve error handling
+ * - level system, w/o position indication, number of tries
+ * - helper : rules and CLI arguments
+ * - repetition forbidden
+ */
 
 /**
  * Get a randomized string to play with
@@ -18,58 +26,25 @@ string AUTHORIZED_CHAR = "RYBOP";
  *
  * @return string
  */
-string stringToGuess(string authorizedChar) {
-    string toGuess = authorizedChar;
-    unsigned seed = chrono::system_clock::now().time_since_epoch().count();
-    shuffle(toGuess.begin(), toGuess.end(), default_random_engine(seed));
-
-    return toGuess;
-}
+string stringToGuess(string authorizedChar);
 
 /**
  * in_array in c
  */
-bool isCharInString(char needle, string haystack) {
-    for (size_t i = 0; i < haystack.length(); ++i) {
-        if (needle == haystack[i]) {
-            return true;
-        }
-    }
-
-    return false;
-}
+bool isCharInString(char needle, string haystack);
 
 /**
  * Returns if the mastermind's distance shows error
  */
-bool hasError(string patternMatching) {
-    for (size_t i = 0; i < patternMatching.length(); ++i) {
-        if (isCharInString('-', patternMatching) || isCharInString('x', patternMatching)) {
-            return true;
-        }
-    }
-    return false;
-}
+bool hasError(string patternMatching);
 
 /**
  * Returns the mastermind's distance between the solution and the sequence to guess
  *
- * @var string guessing
+ * @param string guessing String of the attempt N
+ * @param string toGuess Solution
  */
-string getPatternMatching(string guessing, string toGuess) {
-    string patternMatching = "";
-    for (size_t i = 0; i < guessing.length(); ++i) {
-        if (!isCharInString(guessing[i], toGuess)) {
-            patternMatching += "x";
-        } else if (guessing[i] == toGuess[i]) {
-            patternMatching += "+";
-        } else {
-            patternMatching += "-";
-        }
-    }
-
-    return patternMatching;
-}
+string getPatternMatching(string guessing, string toGuess);
 
 int main(int const argc, char const *argv[]) {
     cout << " ---- Mastermind ---- " << endl;
@@ -77,7 +52,7 @@ int main(int const argc, char const *argv[]) {
     cout << "Available colors : R(ed) Y(ellow) B(lue) O(range) P(ink)" << endl;
     cout << "Response := + : color in good position | - : color in wrong position | x : bad color" << endl;
 
-    int attempt = 0;
+    unsigned int attempt = 0;
     string guessing;
     string toGuess = stringToGuess(AUTHORIZED_CHAR);
     bool found = false;
@@ -99,10 +74,56 @@ int main(int const argc, char const *argv[]) {
     } while(attempt < LOOP);
 
     if (found) {
-        cout << "Congrats ! Solution " << toGuess << " was found in " << attempt << " try." << endl;
+        cout << "Congrats ! Solution " << toGuess << " was found in " << attempt << " tries." << endl;
     } else {
         cout << "Sorry, solution " << toGuess << " wasn't found." << endl;
     }
 
     return 0;
+}
+
+// Get a randomized string to play with
+string stringToGuess(string authorizedChar) {
+    string toGuess = authorizedChar;
+    unsigned seed = chrono::system_clock::now().time_since_epoch().count();
+    shuffle(toGuess.begin(), toGuess.end(), default_random_engine(seed));
+
+    return toGuess;
+}
+
+// in_array in c
+bool isCharInString(char needle, string haystack) {
+    for (size_t i = 0; i < haystack.length(); ++i) {
+        if (needle == haystack[i]) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// Returns if the mastermind's distance shows error
+bool hasError(string patternMatching) {
+    for (size_t i = 0; i < patternMatching.length(); ++i) {
+        if (isCharInString('-', patternMatching) || isCharInString('x', patternMatching)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Returns the mastermind's distance between the solution and the sequence to guess
+string getPatternMatching(string guessing, string toGuess) {
+    string patternMatching = "";
+    for (size_t i = 0; i < guessing.length(); ++i) {
+        if (!isCharInString(guessing[i], toGuess)) {
+            patternMatching += "x";
+        } else if (guessing[i] == toGuess[i]) {
+            patternMatching += "+";
+        } else {
+            patternMatching += "-";
+        }
+    }
+
+    return patternMatching;
 }
