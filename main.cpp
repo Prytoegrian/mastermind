@@ -9,6 +9,10 @@ using namespace std;
 
 const unsigned int LOOP = 10;
 
+const int NUMBER_EQUAL = 0;
+const int FIRST_LESS = -1;
+const int FIRST_GREATER = 1;
+
 const string AUTHORIZED_CHAR = "RYBOP";
 
 /*
@@ -18,6 +22,16 @@ const string AUTHORIZED_CHAR = "RYBOP";
  * - helper : rules and CLI arguments
  * - repetition forbidden
  */
+
+/**
+ * Compare two integers
+ *
+ * @param int a
+ * @param int b
+ *
+ * @return -1 if a < b, 1 if a  > b, 0 otherwise
+ */
+int compare(int a, int b);
 
 /**
  * Get a randomized string to play with
@@ -32,6 +46,13 @@ string stringToGuess(string authorizedChar);
  * in_array in c
  */
 bool isCharInString(char needle, string haystack);
+
+/**
+ * Checks if guessing repeats a letter
+ *
+ * @param string guessing String of the attempt N
+ */
+bool hasRepetition(string guessing);
 
 /**
  * Returns if the mastermind's distance shows error
@@ -55,14 +76,22 @@ int main(int const argc, char const *argv[]) {
     unsigned int attempt = 0;
     string guessing;
     string toGuess = stringToGuess(AUTHORIZED_CHAR);
+    unsigned int toGuessLength = toGuess.length();
     bool found = false;
     do {
         ++attempt;
-        cout << "Try to guess sequence (" << attempt << "/" << LOOP << ") : " << endl;
+        cout << ">> Try to guess sequence (" << attempt << "/" << LOOP << ") : " << endl;
         cin >> guessing;
-        if (guessing.length() != toGuess.length()) {
-            cout << "Guessing is too short or too long" << endl;
-            continue;
+        switch (compare(guessing.length(), toGuessLength)) {
+            case FIRST_LESS:
+                cout << ">> Guessing is too short" << endl;
+                continue;
+            case FIRST_GREATER:
+                cout << ">> Guessing is too long" << endl;
+                continue;
+        }
+        if (hasRepetition(guessing)) {
+            cout << ">> Guessing has repetition" << endl;
         }
         string patternMatching = getPatternMatching(guessing, toGuess);
         if (!hasError(patternMatching)) {
@@ -70,16 +99,27 @@ int main(int const argc, char const *argv[]) {
             break;
         }
 
-        cout << "Result : " << patternMatching << endl;
+        cout << ">> Result : " << patternMatching << endl;
     } while(attempt < LOOP);
 
     if (found) {
-        cout << "Congrats ! Solution " << toGuess << " was found in " << attempt << " tries." << endl;
+        cout << ">> Congrats ! Solution " << toGuess << " was found in " << attempt << " tries." << endl;
     } else {
-        cout << "Sorry, solution " << toGuess << " wasn't found." << endl;
+        cout << ">> Sorry, solution " << toGuess << " wasn't found." << endl;
     }
 
     return 0;
+}
+
+// Compare two integers
+int compare(int a, int b) {
+    if (a == b) {
+        return NUMBER_EQUAL;
+    } else if (a < b) {
+        return FIRST_LESS;
+    }
+
+    return FIRST_GREATER;
 }
 
 // Get a randomized string to play with
@@ -95,6 +135,19 @@ string stringToGuess(string authorizedChar) {
 bool isCharInString(char needle, string haystack) {
     for (size_t i = 0; i < haystack.length(); ++i) {
         if (needle == haystack[i]) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// Checks if guessing repeats a letter
+bool hasRepetition(string guessing) {
+    for (size_t i = 0; i < guessing.length(); i++) {
+        // Loop invariant :
+        // for each letter guessing[i], guessing[x] when x < i is already verified !
+        if (isCharInString(guessing[i], guessing.substr(i+1))) {
             return true;
         }
     }
