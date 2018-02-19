@@ -19,7 +19,6 @@ const string AUTHORIZED_CHAR = "RYBOP";
  * TODO :
  * - improve error handling
  * - level system, w/o position indication, number of tries
- * - helper : rules and CLI arguments
  * - repetition forbidden
  */
 
@@ -48,11 +47,11 @@ string stringToGuess(string authorizedChar);
 bool isCharInString(char needle, string haystack);
 
 /**
- * Checks if guessing repeats a letter
+ * Checks if attempt repeats a letter
  *
- * @param string guessing String of the attempt N
+ * @param string attempt String of the attempt N
  */
-bool hasRepetition(string guessing);
+bool hasRepetition(string attempt);
 
 /**
  * Returns if the mastermind's distance shows error
@@ -62,50 +61,29 @@ bool hasError(string patternMatching);
 /**
  * Returns the mastermind's distance between the solution and the sequence to guess
  *
- * @param string guessing String of the attempt N
- * @param string toGuess Solution
+ * @param string attempt String of the attempt N
+ * @param string toBreak Solution
  */
-string getPatternMatching(string guessing, string toGuess);
+string getPatternMatching(string attempt, string toBreak);
+
+/**
+ * Man n rules
+ */
+void displayHelp();
+
+/**
+ * Let's play !
+ */
+void play();
 
 int main(int const argc, char const *argv[]) {
+    cout << " -------------------- " << endl;
     cout << " ---- Mastermind ---- " << endl;
     cout << " -------------------- " << endl;
-    cout << "Available colors : R(ed) Y(ellow) B(lue) O(range) P(ink)" << endl;
-    cout << "Response := + : color in good position | - : color in wrong position | x : bad color" << endl;
-
-    unsigned int attempt = 0;
-    string guessing;
-    string toGuess = stringToGuess(AUTHORIZED_CHAR);
-    unsigned int toGuessLength = toGuess.length();
-    bool found = false;
-    do {
-        ++attempt;
-        cout << ">> Try to guess sequence (" << attempt << "/" << LOOP << ") : " << endl;
-        cin >> guessing;
-        switch (compare(guessing.length(), toGuessLength)) {
-            case FIRST_LESS:
-                cout << ">> Guessing is too short" << endl;
-                continue;
-            case FIRST_GREATER:
-                cout << ">> Guessing is too long" << endl;
-                continue;
-        }
-        if (hasRepetition(guessing)) {
-            cout << ">> Guessing has repetition" << endl;
-        }
-        string patternMatching = getPatternMatching(guessing, toGuess);
-        if (!hasError(patternMatching)) {
-            found = true;
-            break;
-        }
-
-        cout << ">> Result : " << patternMatching << endl;
-    } while(attempt < LOOP);
-
-    if (found) {
-        cout << ">> Congrats ! Solution " << toGuess << " was found in " << attempt << " tries." << endl;
+    if (argc > 1 && string(argv[1]) == "-h") {
+        displayHelp();
     } else {
-        cout << ">> Sorry, solution " << toGuess << " wasn't found." << endl;
+        play();
     }
 
     return 0;
@@ -124,11 +102,11 @@ int compare(int a, int b) {
 
 // Get a randomized string to play with
 string stringToGuess(string authorizedChar) {
-    string toGuess = authorizedChar;
+    string toBreak = authorizedChar;
     unsigned seed = chrono::system_clock::now().time_since_epoch().count();
-    shuffle(toGuess.begin(), toGuess.end(), default_random_engine(seed));
+    shuffle(toBreak.begin(), toBreak.end(), default_random_engine(seed));
 
-    return toGuess;
+    return toBreak;
 }
 
 // in_array in c
@@ -142,12 +120,12 @@ bool isCharInString(char needle, string haystack) {
     return false;
 }
 
-// Checks if guessing repeats a letter
-bool hasRepetition(string guessing) {
-    for (size_t i = 0; i < guessing.length(); i++) {
+// Checks if attempt repeats a letter
+bool hasRepetition(string attempt) {
+    for (size_t i = 0; i < attempt.length(); i++) {
         // Loop invariant :
-        // for each letter guessing[i], guessing[x] when x < i is already verified !
-        if (isCharInString(guessing[i], guessing.substr(i+1))) {
+        // for all attempt[i], attempt[x] is already verified (for all x < i) !
+        if (isCharInString(attempt[i], attempt.substr(i+1))) {
             return true;
         }
     }
@@ -166,12 +144,12 @@ bool hasError(string patternMatching) {
 }
 
 // Returns the mastermind's distance between the solution and the sequence to guess
-string getPatternMatching(string guessing, string toGuess) {
+string getPatternMatching(string attempt, string toBreak) {
     string patternMatching = "";
-    for (size_t i = 0; i < guessing.length(); ++i) {
-        if (!isCharInString(guessing[i], toGuess)) {
+    for (size_t i = 0; i < attempt.length(); ++i) {
+        if (!isCharInString(attempt[i], toBreak)) {
             patternMatching += "x";
-        } else if (guessing[i] == toGuess[i]) {
+        } else if (attempt[i] == toBreak[i]) {
             patternMatching += "+";
         } else {
             patternMatching += "-";
@@ -179,4 +157,59 @@ string getPatternMatching(string guessing, string toGuess) {
     }
 
     return patternMatching;
+}
+
+void displayHelp() {
+    cout << "Mastermind is a code-breaking game for two players (Thanks Wikipedia <3)." << endl;
+    cout << "Your goal is to break the sequence of color chosen by the program before the tenth try." << endl;
+    cout << "Five colors are availables : R(ed) - Y(ellow) - B(lue) - O(range) - P(ink)." << endl;
+    cout << endl;
+    cout << "For each try, the program helps you by giving you clues about the solution : " << endl;
+    cout << "   :: + for each color in good position" << endl;
+    cout << "   :: - for each color in wrong position" << endl;
+    cout << "   :: x for a wrong color name" << endl;
+    cout << endl;
+    cout << "A strange game." << endl;
+    cout << "The only winning move is" << endl;
+    cout << "not to play." << endl;
+    cout << endl;
+    cout << "How about a nice game of mastermind ?" << endl;
+
+}
+
+void play() {
+    unsigned int tries = 0;
+    string attempt;
+    string toBreak = stringToGuess(AUTHORIZED_CHAR);
+    unsigned int toBreakLength = toBreak.length();
+    bool found = false;
+    do {
+        ++tries;
+        cout << ">> Try to break sequence (" << tries << "/" << LOOP << ") : " << endl;
+        cin >> attempt;
+        switch (compare(attempt.length(), toBreakLength)) {
+            case FIRST_LESS:
+                cout << ">> Guessing is too short" << endl;
+                continue;
+            case FIRST_GREATER:
+                cout << ">> Guessing is too long" << endl;
+                continue;
+        }
+        if (hasRepetition(attempt)) {
+            cout << ">> Guessing has repetition" << endl;
+        }
+        string patternMatching = getPatternMatching(attempt, toBreak);
+        if (!hasError(patternMatching)) {
+            found = true;
+            break;
+        }
+
+        cout << ">> Result : " << patternMatching << endl;
+    } while(tries < LOOP);
+
+    if (found) {
+        cout << ">> Congrats ! Solution " << toBreak << " was found in " << tries << " tries." << endl;
+    } else {
+        cout << ">> Sorry, solution " << toBreak << " wasn't found." << endl;
+    }
 }
